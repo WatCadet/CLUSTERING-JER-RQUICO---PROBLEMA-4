@@ -24,6 +24,7 @@ p {
 ```{r, echo=FALSE, eval=TRUE, message=FALSE}
 library(tidyverse)
 library(dplyr)
+library(factoextra)
 ```
 # Problema 4
 
@@ -34,8 +35,141 @@ Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada mét
 
 ## Resumen 
 ## Lectura y limpieza de los datos
+
+```{r}
+data <-read.csv("data_comercio.csv",
+                   header=TRUE, sep=",")
+raw_data <- data %>% select(-1)
+raw_data_numeric <- raw_data[, sapply(raw_data, is.numeric)]
+```
+
 ## Análisis descriptivo
-## Aplicación y comparación de distintos métodos de clustering jerárquicos
+
+Analicemos nuestro conjunto de datos, que consta de 200 observaciones y 5 variables:
+
+### Descripción variables
+  - `cliente_id`: Es una variable utilizada como identificador único para cada muestra. Los nombres se construyen siguiendo un formato específico: la letra "C" seguida por un número que corresponde al número de la muestra.  
+  - `categoria`: Es una variable cualitativa que clasifica a los individuos según el tipo de compra que han realizado. En la siguiente tabla se presentan las categorías disponibles junto con la cantidad de observaciones correspondientes a cada una:
+```{r}
+table(raw_data$categoria)
+```
+  
+  - `importe_gastado`: Es una variable cuantitativa continua que representa el importe gastado, expresado en euros.
+  - `num_articulos`: Es una variable cuantitativa discreta que representa el número de articulos comprados.
+  - `ultima_compra`: Es una variable de tipo fecha. Nos indica la fecha de la ultima compra. 
+  
+Visualizemos ahora un gráfico de puntos de las variables `importe_gastado` y `num_articulos` segun la categoria: 
+
+```{r}
+d <- raw_data %>% select(categoria, importe_gastado, num_articulos)
+ggplot(data = d, aes(x = importe_gastado, y = num_articulos, color = categoria)) +
+  geom_point(size = 2.5) +
+  theme_bw()
+```
+
+
+## Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos
+
+Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos escoger una medida de distancia y un tipo de enlace. Veamos los casos estudiados:  
+
+### Distancia Euclidea
+
+En este caso, empleamos la función hclust(), a la que se pasa como argumento una matriz de distancia euclidea y el tipo de enlace Se comparan los resultados con los enlaces simple, completo, medio y de Ward:
+
+```{r}
+raw_data_numeric <- scale(raw_data_numeric, center = TRUE, scale = TRUE)
+# Matriz de distancias
+matriz_distancias <- dist(raw_data_numeric, method = "euclidean")
+
+# Fijamos semilla
+set.seed(123)
+
+hc_euclidea_simple   <- hclust(d = matriz_distancias, method = "single")
+hc_euclidea_completo <- hclust(d = matriz_distancias, method = "complete")
+hc_euclidea_medio  <- hclust(d = matriz_distancias, method = "average")
+hc_euclidea_ward  <- hclust(d = matriz_distancias, method = "ward.D2")
+```
+
+Representemos los dendogramas:
+
+```{r}
+fviz_dend(x = hc_euclidea_simple, cex = 0.6, main = "Dendrograma - Enlace Simple")
+fviz_dend(x = hc_euclidea_completo, cex = 0.6, main = "Dendrograma - Enlace Completo")
+fviz_dend(x = hc_euclidea_medio, cex = 0.6, main = "Dendrograma - Enlace Medio")
+fviz_dend(x = hc_euclidea_ward, cex = 0.6, main = "Dendrograma - Enlace de Ward")
+```
+
+Sabemos que existen 5 grupos en la población, evaluemos ahora que enlace consigue los mejores resultados. En este caso, los cuatro tipos identifican claramente 5 clusters. Aunque esto no significa que en los 4 dendrogramas los clusters estén formados por exactamente las mismas observaciones.
+
+Evaluemos hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original:
+```{r}
+cor(x = matriz_distancias, cophenetic(hc_euclidea_simple))
+cor(x = matriz_distancias, cophenetic(hc_euclidea_completo))
+cor(x = matriz_distancias, cophenetic(hc_euclidea_medio))
+cor(x = matriz_distancias, cophenetic(hc_euclidea_ward))
+```
+Cuanto más cercano es el valor a 1, mejor refleja el dendrograma la verdadera similitud entre las observaciones. En este caso, el método de enlace medio consigue representar ligeramente mejor la similitud entre observaciones, seguido por el enlace completo y el de Ward. En este caso, el enlace simple es el que da peores resultados. 
+
+
+
+Ahora tenemos que decidir a qué altura cortamos para generar los clusters. La función `cutree()` nos devuelve el cluster al que se ha asignado cada observación dependiendo del número de clusters especificado:
+
+```{r}
+cutree(hc_euclidea_medio, k = 5)
+```
+Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
+
+```{r}
+table(cutree(hc_euclidea_ward, k = 5), raw_data[, "categoria"])
+```
+### Distancia Manhatta
+
+Hacemos lo mismo con la distància de Manhattan
+
+```{r}
+# Matriz de distancias
+matriz_distancias2 <- dist(raw_data_numeric, method = "manhattan")
+
+# Fijamos semilla
+set.seed(123)
+
+hc_manhattan_simple   <- hclust(d = matriz_distancias2, method = "single")
+hc_manhattan_completo <- hclust(d = matriz_distancias2, method = "complete")
+hc_manhattan_medio  <- hclust(d = matriz_distancias2, method = "average")
+hc_manhattan_ward  <- hclust(d = matriz_distancias2, method = "ward.D2")
+```
+
+Representemos los dendogramas:
+
+```{r}
+fviz_dend(x = hc_manhattan_simple, cex = 0.6, main = "Dendrograma - Enlace Simple")
+fviz_dend(x = hc_manhattan_completo, cex = 0.6, main = "Dendrograma - Enlace Completo")
+fviz_dend(x = hc_manhattan_medio, cex = 0.6, main = "Dendrograma - Enlace Medio")
+fviz_dend(x = hc_manhattan_ward, cex = 0.6, main = "Dendrograma - Enlace de Ward")
+```
+
+Evaluemos hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original:
+```{r}
+cor(x = matriz_distancias2, cophenetic(hc_manhattan_simple))
+cor(x = matriz_distancias2, cophenetic(hc_manhattan_completo))
+cor(x = matriz_distancias2, cophenetic(hc_manhattan_medio))
+cor(x = matriz_distancias2, cophenetic(hc_manhattan_ward))
+```
+Ahora tenemos que decidir a qué altura cortamos para generar los clusters. La función `cutree()` nos devuelve el cluster al que se ha asignado cada observación dependiendo del número de clusters especificado:
+
+```{r}
+cutree(hc_manhattan_medio, k = 5)
+```
+
+Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
+
+```{r}
+table(cutree(hc_manhattan_medio, k = 5), raw_data[, "categoria"])
+```
 ## Recomendaciones
+
 ## Bibliografia
+
+- [Ciencia de Datos](https://cienciadedatos.net/documentos/37_clustering_y_heatmaps#Hierarchical_clustering)
+ - [Aprender R - UIB](https://aprender-uib.github.io/AD/)
 
