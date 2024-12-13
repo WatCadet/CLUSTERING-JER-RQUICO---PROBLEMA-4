@@ -1,0 +1,41 @@
+---
+title: "P4 -  Segmentación de clientes utilizando métodos de clustering jerárquicos"
+subtitle: "20582 - Análisis de Datos para el GMAT"
+format:
+  html:
+    theme: lumen
+    toc: true
+    toc-depth: 3
+Rendering:
+    embed-resources: true
+author: 
+  - Dídac Capó, Irene Rodríguez y Carlos Aliño
+---
+
+<style>
+p {
+  text-align: justify;
+}
+</style>
+
+
+[Enlace al repositorio de Github](https://github.com/WatCadet/CLUSTERING_JERARQUICO_P4)
+
+```{r, echo=FALSE, eval=TRUE, message=FALSE}
+library(tidyverse)
+library(dplyr)
+```
+# Problema 4
+
+Una empresa de comercio busca identificar segmentos de clientes según sus patrones de compra. Para ello, se dispone de un conjunto de datos ficticio denominado [data_comercio.csv](https://github.com/igmuib/Practica_AD/blob/main/data_comercio.csv). Este conjunto de datos incluye información sobre la identificación del cliente, la categoría de las compras realizadas, el importe gastado en euros, el número de artículos adquiridos y la fecha de la última compra. La tarea consiste en realizar una segmentación de clientes utilizando métodos de clustering jerárquicos con diferentes enlaces y distancias.
+
+Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada método y comparar las diferencias entre ellos, destacando las ventajas y desventajas de cada enfoque. Además, se espera un análisis de las características principales de cada clúster, identificando, por ejemplo, a los clientes con mayor gasto promedio, el número promedio de artículos comprados por grupo y otras características relevantes. Finalmente, con base en los segmentos identificados, se deben proponer recomendaciones estratégicas para diseñar campañas de marketing dirigidas específicamente a cada segmento.
+
+
+## Resumen 
+## Lectura y limpieza de los datos
+## Análisis descriptivo
+## Aplicación y comparación de distintos métodos de clustering jerárquicos
+## Recomendaciones
+## Bibliografia
+
