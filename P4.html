@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.555">
+<meta name="generator" content="quarto-1.4.553">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -133,11 +133,6 @@ p {
 }
 </style>
 <p><a href="https://github.com/WatCadet/CLUSTERING_JERARQUICO_P4">Enlace al repositorio de Github</a></p>
-<div class="cell">
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: package 'factoextra' was built under R version 4.4.2</code></pre>
-</div>
-</div>
 <section id="problema-4" class="level1">
 <h1>Problema 4</h1>
 <p>Una empresa de comercio busca identificar segmentos de clientes según sus patrones de compra. Para ello, se dispone de un conjunto de datos ficticio denominado <a href="https://github.com/igmuib/Practica_AD/blob/main/data_comercio.csv">data_comercio.csv</a>. Este conjunto de datos incluye información sobre la identificación del cliente, la categoría de las compras realizadas, el importe gastado en euros, el número de artículos adquiridos y la fecha de la última compra. La tarea consiste en realizar una segmentación de clientes utilizando métodos de clustering jerárquicos con diferentes enlaces y distancias.</p>
@@ -148,10 +143,13 @@ p {
 <section id="lectura-y-limpieza-de-los-datos" class="level2">
 <h2 class="anchored" data-anchor-id="lectura-y-limpieza-de-los-datos">Lectura y limpieza de los datos</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="st">"data_comercio.csv"</span>,</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">header=</span><span class="cn">TRUE</span>, <span class="at">sep=</span><span class="st">","</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>raw_data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="dv">1</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> raw_data[, <span class="fu">sapply</span>(raw_data, is.numeric)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cargamos los datos</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="st">"data_comercio.csv"</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">header=</span><span class="cn">TRUE</span>, <span class="at">sep=</span><span class="st">","</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># eliminamos el identificador</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>raw_data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># filtramos las variables numericas</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> raw_data[, <span class="fu">sapply</span>(raw_data, is.numeric)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="análisis-descriptivo" class="level2">
@@ -165,7 +163,7 @@ p {
 <li><code>categoria</code>: Es una variable cualitativa que clasifica a los individuos según el tipo de compra que han realizado. En la siguiente tabla se presentan las categorías disponibles junto con la cantidad de observaciones correspondientes a cada una:</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(raw_data<span class="sc">$</span>categoria)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(raw_data<span class="sc">$</span>categoria)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
   Alimentos Electrónica       Hogar    Juguetes        Ropa 
@@ -179,10 +177,10 @@ p {
 </ul>
 <p>Visualizemos ahora un gráfico de puntos de las variables <code>importe_gastado</code> y <code>num_articulos</code> segun la categoria:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> raw_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(categoria, importe_gastado, num_articulos)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> d, <span class="fu">aes</span>(<span class="at">x =</span> importe_gastado, <span class="at">y =</span> num_articulos, <span class="at">color =</span> categoria)) <span class="sc">+</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> raw_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(categoria, importe_gastado, num_articulos)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> d, <span class="fu">aes</span>(<span class="at">x =</span> importe_gastado, <span class="at">y =</span> num_articulos, <span class="at">color =</span> categoria)) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -191,30 +189,68 @@ p {
 </div>
 </div>
 </div>
+<p>Representamos con <code>ggpairs</code> la relación entre las tres variables <code>importe_gastado</code>, <code>num_articulos</code> y <code>categoria</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> raw_data <span class="sc">%&gt;%</span> <span class="fu">select</span>(categoria, importe_gastado, num_articulos)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggpairs</span>(d, <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">color=</span> categoria), <span class="at">legend =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="P4_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observamos también las medias y medianas de los datos por cada categoría:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(categoria) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">media_importe =</span> <span class="fu">mean</span>(importe_gastado, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mediana_importe =</span> <span class="fu">median</span>(importe_gastado, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">media_articulos =</span> <span class="fu">mean</span>(num_articulos, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">mediana_articulos =</span> <span class="fu">median</span>(num_articulos, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 5
+  categoria   media_importe mediana_importe media_articulos mediana_articulos
+  &lt;chr&gt;               &lt;dbl&gt;           &lt;dbl&gt;           &lt;dbl&gt;             &lt;dbl&gt;
+1 Alimentos            257.            233.            5.30                 5
+2 Electrónica          277.            263.            6.33                 7
+3 Hogar                291.            311.            5                    5
+4 Juguetes             252.            250.            6.53                 7
+5 Ropa                 270.            234.            5.18                 5</code></pre>
+</div>
+</div>
 </section>
 </section>
 <section id="aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos" class="level2">
 <h2 class="anchored" data-anchor-id="aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos">Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos</h2>
+<p>Primero tipificamos los datos:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> <span class="fu">scale</span>(raw_data_numeric, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <p>Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos escoger una medida de distancia y un tipo de enlace. Veamos los casos estudiados:</p>
 <section id="distancia-euclidea" class="level3">
 <h3 class="anchored" data-anchor-id="distancia-euclidea">Distancia Euclidea</h3>
 <p>En este caso, empleamos la función hclust(), a la que se pasa como argumento una matriz de distancia euclidea y el tipo de enlace Se comparan los resultados con los enlaces simple, completo, medio y de Ward:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> <span class="fu">scale</span>(raw_data_numeric, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Matriz de distancias</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>matriz_distancias <span class="ot">&lt;-</span> <span class="fu">dist</span>(raw_data_numeric, <span class="at">method =</span> <span class="st">"euclidean"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fijamos semilla</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>hc_euclidea_simple   <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"single"</span>)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>hc_euclidea_completo <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"complete"</span>)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>hc_euclidea_medio  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"average"</span>)</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>hc_euclidea_ward  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> <span class="fu">scale</span>(raw_data_numeric, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Matriz de distancias</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>matriz_distancias <span class="ot">&lt;-</span> <span class="fu">dist</span>(raw_data_numeric, <span class="at">method =</span> <span class="st">"euclidean"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fijamos semilla</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>hc_euclidea_simple   <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"single"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>hc_euclidea_completo <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"complete"</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>hc_euclidea_medio  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"average"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>hc_euclidea_ward  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Representemos los dendogramas:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_simple, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Simple"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_simple, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Simple"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: The `&lt;scale&gt;` argument of `guides()` cannot be `FALSE`. Use "none" instead as
 of ggplot2 3.3.4.
@@ -224,31 +260,31 @@ of ggplot2 3.3.4.
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_completo, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Completo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_completo, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Completo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-6-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_medio, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Medio"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_medio, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Medio"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-6-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-9-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_ward, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace de Ward"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_euclidea_ward, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace de Ward"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-6-4.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-9-4.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -256,19 +292,19 @@ of ggplot2 3.3.4.
 <p>Sabemos que existen 5 grupos en la población, evaluemos ahora que enlace consigue los mejores resultados. En este caso, los cuatro tipos identifican claramente 5 clusters. Aunque esto no significa que en los 4 dendrogramas los clusters estén formados por exactamente las mismas observaciones.</p>
 <p>Evaluemos hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_simple))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_simple))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.3379576</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_completo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_completo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6481864</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_medio))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_medio))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6561439</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_ward))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias, <span class="fu">cophenetic</span>(hc_euclidea_ward))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6267467</code></pre>
 </div>
@@ -276,7 +312,7 @@ of ggplot2 3.3.4.
 <p>Cuanto más cercano es el valor a 1, mejor refleja el dendrograma la verdadera similitud entre las observaciones. En este caso, el método de enlace medio consigue representar ligeramente mejor la similitud entre observaciones, seguido por el enlace completo y el de Ward. En este caso, el enlace simple es el que da peores resultados.</p>
 <p>Ahora tenemos que decidir a qué altura cortamos para generar los clusters. La función <code>cutree()</code> nos devuelve el cluster al que se ha asignado cada observación dependiendo del número de clusters especificado:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cutree</span>(hc_euclidea_medio, <span class="at">k =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cutree</span>(hc_euclidea_medio, <span class="at">k =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  [1] 1 2 2 3 4 5 5 5 5 4 3 5 1 4 1 2 1 4 2 1 5 5 3 5 5 5 3 4 5 1 3 2 4 4 2 1 1
  [38] 4 4 3 1 5 4 5 2 5 3 1 5 2 5 4 2 4 2 3 1 1 4 5 1 2 5 1 1 4 3 1 2 5 3 2 3 3
@@ -288,7 +324,7 @@ of ggplot2 3.3.4.
 </div>
 <p>Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">cutree</span>(hc_euclidea_ward, <span class="at">k =</span> <span class="dv">5</span>), raw_data[, <span class="st">"categoria"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">cutree</span>(hc_euclidea_ward, <span class="at">k =</span> <span class="dv">5</span>), raw_data<span class="sc">$</span>categoria)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   
     Alimentos Electrónica Hogar Juguetes Ropa
@@ -304,74 +340,74 @@ of ggplot2 3.3.4.
 <h3 class="anchored" data-anchor-id="distancia-manhatta">Distancia Manhatta</h3>
 <p>Hacemos lo mismo con la distància de Manhattan</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Matriz de distancias</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>matriz_distancias2 <span class="ot">&lt;-</span> <span class="fu">dist</span>(raw_data_numeric, <span class="at">method =</span> <span class="st">"manhattan"</span>)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fijamos semilla</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>hc_manhattan_simple   <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"single"</span>)</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>hc_manhattan_completo <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"complete"</span>)</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>hc_manhattan_medio  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"average"</span>)</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>hc_manhattan_ward  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Matriz de distancias</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>matriz_distancias2 <span class="ot">&lt;-</span> <span class="fu">dist</span>(raw_data_numeric, <span class="at">method =</span> <span class="st">"manhattan"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fijamos semilla</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>hc_manhattan_simple   <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"single"</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>hc_manhattan_completo <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"complete"</span>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>hc_manhattan_medio  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"average"</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>hc_manhattan_ward  <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="at">d =</span> matriz_distancias2, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Representemos los dendogramas:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_simple, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Simple"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_simple, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Simple"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_completo, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Completo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_completo, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Completo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-11-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-14-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_medio, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Medio"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_medio, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace Medio"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-11-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-14-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_ward, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace de Ward"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fviz_dend</span>(<span class="at">x =</span> hc_manhattan_ward, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">main =</span> <span class="st">"Dendrograma - Enlace de Ward"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="P4_files/figure-html/unnamed-chunk-11-4.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="P4_files/figure-html/unnamed-chunk-14-4.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Evaluemos hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_simple))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_simple))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.3945775</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_completo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_completo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6086569</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_medio))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_medio))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6383726</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_ward))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(<span class="at">x =</span> matriz_distancias2, <span class="fu">cophenetic</span>(hc_manhattan_ward))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.6333568</code></pre>
 </div>
 </div>
 <p>Ahora tenemos que decidir a qué altura cortamos para generar los clusters. La función <code>cutree()</code> nos devuelve el cluster al que se ha asignado cada observación dependiendo del número de clusters especificado:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cutree</span>(hc_manhattan_medio, <span class="at">k =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cutree</span>(hc_manhattan_medio, <span class="at">k =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  [1] 1 2 3 4 4 5 5 5 5 4 4 5 1 4 1 3 1 1 3 1 5 5 4 5 5 3 4 4 5 1 4 3 1 4 2 1 1
  [38] 4 4 4 1 5 4 5 3 5 4 1 5 2 5 4 3 4 3 4 1 1 4 5 1 3 5 1 1 4 4 1 3 5 4 3 2 4
@@ -383,7 +419,7 @@ of ggplot2 3.3.4.
 </div>
 <p>Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">cutree</span>(hc_manhattan_medio, <span class="at">k =</span> <span class="dv">5</span>), raw_data[, <span class="st">"categoria"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">cutree</span>(hc_manhattan_medio, <span class="at">k =</span> <span class="dv">5</span>), raw_data<span class="sc">$</span>categoria)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   
     Alimentos Electrónica Hogar Juguetes Ropa

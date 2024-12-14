@@ -25,6 +25,8 @@ p {
 library(tidyverse)
 library(dplyr)
 library(factoextra)
+library(GGally)
+library(ggplot2)
 ```
 # Problema 4
 
@@ -37,9 +39,12 @@ Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada mét
 ## Lectura y limpieza de los datos
 
 ```{r}
+# cargamos los datos
 data <-read.csv("data_comercio.csv",
                    header=TRUE, sep=",")
+# eliminamos el identificador
 raw_data <- data %>% select(-1)
+# filtramos las variables numericas
 raw_data_numeric <- raw_data[, sapply(raw_data, is.numeric)]
 ```
 
@@ -67,8 +72,33 @@ ggplot(data = d, aes(x = importe_gastado, y = num_articulos, color = categoria))
   theme_bw()
 ```
 
+Representamos con `ggpairs` la relación entre las tres variables `importe_gastado`, `num_articulos` y `categoria`.
+
+```{r, message=FALSE}
+d <- raw_data %>% select(categoria, importe_gastado, num_articulos)
+ggpairs(d, mapping = aes(color= categoria), legend = 1) +
+  theme_bw()
+```
+Observamos también las medias y medianas de los datos por cada categoría:
+
+```{r}
+d %>%
+  group_by(categoria) %>%
+  summarise(
+    media_importe = mean(importe_gastado, na.rm = TRUE),
+    mediana_importe = median(importe_gastado, na.rm = TRUE),
+    media_articulos = mean(num_articulos, na.rm = TRUE),
+    mediana_articulos = median(num_articulos, na.rm = TRUE)
+  )
+```
 
 ## Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos
+
+Primero tipificamos los datos:
+
+```{r}
+raw_data_numeric <- scale(raw_data_numeric, center = TRUE, scale = TRUE)
+```
 
 Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos escoger una medida de distancia y un tipo de enlace. Veamos los casos estudiados:  
 
@@ -117,10 +147,11 @@ Ahora tenemos que decidir a qué altura cortamos para generar los clusters. La f
 ```{r}
 cutree(hc_euclidea_medio, k = 5)
 ```
+
 Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
 
 ```{r}
-table(cutree(hc_euclidea_ward, k = 5), raw_data[, "categoria"])
+table(cutree(hc_euclidea_ward, k = 5), raw_data$categoria)
 ```
 ### Distancia Manhatta
 
@@ -164,8 +195,9 @@ cutree(hc_manhattan_medio, k = 5)
 Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
 
 ```{r}
-table(cutree(hc_manhattan_medio, k = 5), raw_data[, "categoria"])
+table(cutree(hc_manhattan_medio, k = 5), raw_data$categoria)
 ```
+
 ## Recomendaciones
 
 ## Bibliografia
