@@ -96,7 +96,7 @@ d %>%
 ```
 Según el número de artículos se evindencian 2 clusters, uno con mediana $5$ formado por las categorías *alimentos, hogar y ropa* y el otro con mediana igual a $7$ formado por *electrónica y juguetes*.
 
-Según el importe de gasto, podemos separar en 3 clusters: el de importe más alto el *hogar*, el siguiente más alto *alimentación y ropa* y el de menor importe de gasto *electrónica y juguetes*.
+Según el importe de gasto, podemos separar en 3 clusters: el de importe más alto el *hogar*, el siguiente más alto *electrónica y juguetes* y el de menor importe de gasto *alimentación y ropa*.
 
 Por el método del codo, decidimos el número de clusters según donde está el pliegue principal.
 
