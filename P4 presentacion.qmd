@@ -28,6 +28,7 @@ library(factoextra)
 library(GGally)
 library(ggplot2)
 library(cluster)
+library(caret)      
 ```
 # Problema 4
 
@@ -35,7 +36,6 @@ Una empresa de comercio busca identificar segmentos de clientes según sus patro
 
 Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada método y comparar las diferencias entre ellos, destacando las ventajas y desventajas de cada enfoque. Además, se espera un análisis de las características principales de cada clúster, identificando, por ejemplo, a los clientes con mayor gasto promedio, el número promedio de artículos comprados por grupo y otras características relevantes. Finalmente, con base en los segmentos identificados, se deben proponer recomendaciones estratégicas para diseñar campañas de marketing dirigidas específicamente a cada segmento.
 
-## Resumen 
 ## Lectura y limpieza de los datos
 
 ```{r}
@@ -68,7 +68,7 @@ Representamos con `ggpairs` la relación entre las tres variables `importe_gasta
 
 ```{r, message=FALSE}
 d <- raw_data %>% select(categoria, importe_gastado, num_articulos)
-ggpairs(d, mapping = aes(color= categoria), legend = 1) +
+ggpairs(d, mapping = aes(color= categoria,alpha=0.5), legend = 1) +
   theme_bw()
 ```
 
@@ -162,7 +162,7 @@ Observamos ahora las medianas de los datos por cada categoría:
 
 ```{r}
 d %>%
-  group_by(cutree(hc_manhattan_medio, k = 3)) %>%
+  group_by(cutree(hc_manhattan_medio, k = 3))%>%
   summarise(
     mediana_importe = median(importe_gastado, na.rm = TRUE),
     mediana_articulos = median(num_articulos, na.rm = TRUE)
@@ -187,12 +187,9 @@ Veamos cómo ha quedado la clasificación.
 
 ```{r}
 tabla2 = table(pam_cluster$clustering, raw_data$categoria)
-
-prop.table(tabla2)
+tabla2
 
 addmargins(tabla2)
-
-round(prop.table(tabla2, margin=1), 2)
 
 round(prop.table(tabla2, margin=2), 2)
 ```
@@ -216,11 +213,50 @@ d %>%
 
 ## Train - Test
 
+Como hemos visto en las secciones anteriores, el algoritmo k-medoides ha demostrado ofrecer mejores resultados. Para validar este comportamiento, realizaremos una simulación dividiendo los datos en dos partes: utilizaremos el 80% de los datos para entrenar el modelo de k-medoides y el 20% restante se empleará como conjunto de prueba.
+
+En esta etapa de evaluación, compararemos las predicciones generadas por el modelo con la clasificación original de los datos, lo que nos permitirá medir su precisión y rendimiento.
+
+Separamos el conjunto de datos:
+
+```{r}
+set.seed(124) 
+data <- raw_data_numeric
+
+train_index <- createDataPartition(1:nrow(data), p = 0.8, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+test_labels <- pam_cluster$clustering[-train_index]
+```
+Entrenamos el modelo:
+```{r}
+k <- 3
+kmedoids_model <- pam(train_data, k)
+print(kmedoids_model)
+```
+Aplicamos el modelo al conjunto de prueba:
+```{r}
+medoids <- kmedoids_model$medoids
+dist_test <- apply(test_data, 1, function(x) {
+  apply(medoids, 1, function(y) sum(abs(x - y)))  # Distancia Manhattan
+})
+
+test_clusters <- apply(dist_test, 2, which.min)
+```
+Comparamos los resultados del modelo con los reales:
+```{r}
+cluster_factor <- factor(test_clusters, levels = 1:k)
+sum(cluster_factor == test_labels)
+```
+Concluimos que para esta simulación el modelo ha acertado 35 veces de 40. 
+
 
 ## Recomendaciones
 
 ## Bibliografia
 
 - [Ciencia de Datos](https://cienciadedatos.net/documentos/37_clustering_y_heatmaps#Hierarchical_clustering)
- - [Aprender R - UIB](https://aprender-uib.github.io/AD/)
+- [Aprender R - UIB](https://aprender-uib.github.io/AD/)
+- [geeksforgeeks](https://www.geeksforgeeks.org/computing-classification-evaluation-metrics-in-r/)
+ 
 
