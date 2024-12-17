@@ -27,6 +27,7 @@ library(dplyr)
 library(factoextra)
 library(GGally)
 library(ggplot2)
+library(cluster)
 ```
 # Problema 4
 
@@ -55,6 +56,7 @@ Analicemos nuestro conjunto de datos, que consta de 200 observaciones y 5 variab
 ### Descripción variables
   - `cliente_id`: Es una variable utilizada como identificador único para cada muestra. Los nombres se construyen siguiendo un formato específico: la letra "C" seguida por un número que corresponde al número de la muestra.  
   - `categoria`: Es una variable cualitativa que clasifica a los individuos según el tipo de compra que han realizado. En la siguiente tabla se presentan las categorías disponibles junto con la cantidad de observaciones correspondientes a cada una:
+  
 ```{r}
 table(raw_data$categoria)
 ```
@@ -63,15 +65,6 @@ table(raw_data$categoria)
   - `num_articulos`: Es una variable cuantitativa discreta que representa el número de articulos comprados.
   - `ultima_compra`: Es una variable de tipo fecha. Nos indica la fecha de la ultima compra. 
   
-Visualizemos ahora un gráfico de puntos de las variables `importe_gastado` y `num_articulos` según la categoria: 
-
-```{r}
-d <- raw_data %>% select(categoria, importe_gastado, num_articulos)
-ggplot(data = d, aes(x = importe_gastado, y = num_articulos, color = categoria)) +
-  geom_point(size = 2.5) +
-  theme_bw()
-```
-
 Representamos con `ggpairs` la relación entre las tres variables `importe_gastado`, `num_articulos` y `categoria`.
 
 ```{r, message=FALSE}
@@ -80,18 +73,41 @@ ggpairs(d, mapping = aes(color= categoria), legend = 1) +
   theme_bw()
 ```
 
-Observamos también las medias y medianas de los datos por cada categoría:
+El gráfico no nos da mucha información porque no hay diferencias destacables a simple vista entre las 5 categorías. En particular, las cajas de los boxplot se solapan.
+
+Visualizemos con más detalle el gráfico de puntos de las variables `importe_gastado` y `num_articulos` según la categoria: 
+
+```{r}
+d <- raw_data %>% select(categoria, importe_gastado, num_articulos)
+ggplot(data = d, aes(x = importe_gastado, y = num_articulos, color = categoria)) +
+  geom_point(size = 2.5) +
+  theme_bw()
+```
+Los puntos de colores están mezclados. No es evidente una partición de los puntos por estas 5 categorías.
+
+Observamos ahora las medianas de los datos por cada categoría:
 
 ```{r}
 d %>%
   group_by(categoria) %>%
   summarise(
-    media_importe = mean(importe_gastado, na.rm = TRUE),
     mediana_importe = median(importe_gastado, na.rm = TRUE),
-    media_articulos = mean(num_articulos, na.rm = TRUE),
     mediana_articulos = median(num_articulos, na.rm = TRUE)
   )
 ```
+
+Según el número de artículos se evindencian 2 clusters, uno con mediana $5$ formado por las categorías *alimentos, hogar y ropa* y el otro con mediana igual a $7$ formado por *electrónica y juguetes*.
+
+Según el importe de gasto, podemos separar en 3 clusters: el de importe más alto el *hogar*, el siguiente más alto *alimentación y ropa* y el de menor importe de gasto *electrónica y juguetes*.
+
+Por el método del codo, decidimos el número de clusters según dónde está el pliegue principal.
+
+```{r}
+fviz_nbclust(x = raw_data_numeric, FUNcluster = kmeans, method = "wss",
+             diss = dist(raw_data_numeric, method = "manhattan")) +
+  geom_vline(xintercept = 3, linetype = 2)
+```
+Por lo tanto, tomamos $k=3$ y tenemos tres clusters. Entonces veremos si podemos interpretar los clusters según la clasificación por importe de gastos.
 
 ## Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos
 
@@ -108,7 +124,6 @@ Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos es
 En este caso, empleamos la función hclust(), a la que se pasa como argumento una matriz de distancia euclidea y el tipo de enlace Se comparan los resultados con los enlaces simple, completo, medio y de Ward:
 
 ```{r}
-raw_data_numeric <- scale(raw_data_numeric, center = TRUE, scale = TRUE)
 # Matriz de distancias
 matriz_distancias <- dist(raw_data_numeric, method = "euclidean")
 
@@ -123,12 +138,14 @@ hc_euclidea_ward  <- hclust(d = matriz_distancias, method = "ward.D2")
 
 Representemos los dendogramas:
 
+Pintando $k=5$:
+
 ```{r}
-fviz_dend(x = hc_euclidea_simple, cex = 0.6, main = "Dendrograma - Enlace Simple")
-fviz_dend(x = hc_euclidea_completo, cex = 0.6, main = "Dendrograma - Enlace Completo")
+fviz_dend(x = hc_euclidea_simple, k = 5, cex = 0.6, main = "Dendrograma - Enlace Simple")
+fviz_dend(x = hc_euclidea_completo, k = 5, cex = 0.6, main = "Dendrograma - Enlace Completo")
   # + theme(plot.title =  element_text(hjust = 0.5, size = 15))
-fviz_dend(x = hc_euclidea_medio, cex = 0.6, main = "Dendrograma - Enlace Medio")
-fviz_dend(x = hc_euclidea_ward, cex = 0.6, main = "Dendrograma - Enlace de Ward")
+fviz_dend(x = hc_euclidea_medio, k = 5, cex = 0.6, main = "Dendrograma - Enlace Medio")
+fviz_dend(x = hc_euclidea_ward, k = 5, cex = 0.6, main = "Dendrograma - Enlace de Ward")
 ```
 
 Sabemos que existen 5 grupos en la población, evaluemos ahora que enlace consigue los mejores resultados. En este caso, los cuatro tipos identifican claramente 5 clusters. Aunque esto no significa que en los 4 dendrogramas los clusters estén formados por exactamente las mismas observaciones.
@@ -153,7 +170,7 @@ cutree(hc_euclidea_medio, k = 5)
 Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
 
 ```{r}
-table(cutree(hc_euclidea_ward, k = 5), raw_data$categoria)
+table(cutree(hc_euclidea_medio, k = 5), raw_data$categoria)
 ```
 
 ----------
@@ -161,12 +178,12 @@ table(cutree(hc_euclidea_ward, k = 5), raw_data$categoria)
 Validación. D. Eculidea, Enlace Completo.
 
 ```{r}
-fviz_dend(x = hc_euclidea_completo, cex = 0.5, main = "Enlace completo", k_colors = "jco",
+fviz_dend(x = hc_euclidea_medio, k = 5, cex = 0.5, main = "Enlace completo", k_colors = "jco",
           sub = "Distancia euclídea") +
   theme(plot.title =  element_text(hjust = 0.5, size = 15))
 
 hkmeans_cluster <- hkmeans(x = raw_data_numeric, hc.metric = "euclidean",
-                           hc.method = "complete", k = 5)
+                           hc.method = "average", k = 5)
 
 hkmeans_cluster
 
@@ -175,6 +192,18 @@ fviz_cluster(object = hkmeans_cluster, pallete = "jco", repel = TRUE) +
 ```
 
 
+Pintando $k=4$:
+
+```{r}
+fviz_dend(x = hc_euclidea_simple, k = 3, cex = 0.6, main = "Dendrograma - Enlace Simple")
+fviz_dend(x = hc_euclidea_completo, k = 3, cex = 0.6, main = "Dendrograma - Enlace Completo")
+  # + theme(plot.title =  element_text(hjust = 0.5, size = 15))
+fviz_dend(x = hc_euclidea_medio, k = 3, cex = 0.6, main = "Dendrograma - Enlace Medio")
+fviz_dend(x = hc_euclidea_ward, k = 3, cex = 0.6, main = "Dendrograma - Enlace de Ward")
+
+
+table(cutree(hc_euclidea_completo, k = 3), raw_data$categoria)
+```
 
 ### Distancia Manhatta
 
@@ -198,7 +227,7 @@ Representemos los dendogramas:
 ```{r}
 fviz_dend(x = hc_manhattan_simple, cex = 0.6, main = "Dendrograma - Enlace Simple")
 fviz_dend(x = hc_manhattan_completo, cex = 0.6, main = "Dendrograma - Enlace Completo")
-fviz_dend(x = hc_manhattan_medio, cex = 0.6, main = "Dendrograma - Enlace Medio")
+fviz_dend(x = hc_manhattan_medio, k=3, cex = 0.6, main = "Dendrograma - Enlace Medio")
 fviz_dend(x = hc_manhattan_ward, cex = 0.6, main = "Dendrograma - Enlace de Ward")
 ```
 
@@ -218,7 +247,9 @@ cutree(hc_manhattan_medio, k = 5)
 Una forma visual de comprobar los errores en las asignaciones es indicando en el argumento labels el grupo real al que pertenece cada observación. Si la agrupación resultante coincide con los grupos reales, entonces, dentro de cada clusters las labels serán las mismas.
 
 ```{r}
-table(cutree(hc_manhattan_medio, k = 5), raw_data$categoria)
+table(cutree(hc_manhattan_medio, k = 3), raw_data$categoria)
+table(cutree(hc_manhattan_medio, k = 4), raw_data$categoria)
+
 ```
 
 ## Recomendaciones
