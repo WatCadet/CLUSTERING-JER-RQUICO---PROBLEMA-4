@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.553">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -118,9 +118,9 @@ window.Quarto = {
   </ul></li>
   <li><a href="#aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos" id="toc-aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos" class="nav-link" data-scroll-target="#aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos">Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos</a></li>
   <li><a href="#k-medoide" id="toc-k-medoide" class="nav-link" data-scroll-target="#k-medoide">K-medoide</a></li>
-  <li><a href="#decidimos" id="toc-decidimos" class="nav-link" data-scroll-target="#decidimos">Decidimos</a></li>
+  <li><a href="#decidimos-entre-jerárquico-y-k-medoide" id="toc-decidimos-entre-jerárquico-y-k-medoide" class="nav-link" data-scroll-target="#decidimos-entre-jerárquico-y-k-medoide">Decidimos entre jerárquico y K-medoide</a></li>
   <li><a href="#train---test" id="toc-train---test" class="nav-link" data-scroll-target="#train---test">Train - Test</a></li>
-  <li><a href="#recomendaciones" id="toc-recomendaciones" class="nav-link" data-scroll-target="#recomendaciones">Recomendaciones</a></li>
+  <li><a href="#recomendaciones-y-conclusiones" id="toc-recomendaciones-y-conclusiones" class="nav-link" data-scroll-target="#recomendaciones-y-conclusiones">Recomendaciones y conclusiones</a></li>
   <li><a href="#bibliografia" id="toc-bibliografia" class="nav-link" data-scroll-target="#bibliografia">Bibliografia</a></li>
   </ul></li>
   </ul>
@@ -160,20 +160,30 @@ p {
 }
 </style>
 <p><a href="https://github.com/WatCadet/CLUSTERING_JERARQUICO_P4">Enlace al repositorio de Github</a></p>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'factoextra' was built under R version 4.4.2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'caret' was built under R version 4.4.2</code></pre>
+</div>
+</div>
 <section id="problema-4" class="level1">
 <h1>Problema 4</h1>
 <p>Una empresa de comercio busca identificar segmentos de clientes según sus patrones de compra. Para ello, se dispone de un conjunto de datos ficticio denominado <a href="https://github.com/igmuib/Practica_AD/blob/main/data_comercio.csv">data_comercio.csv</a>. Este conjunto de datos incluye información sobre la identificación del cliente, la categoría de las compras realizadas, el importe gastado en euros, el número de artículos adquiridos y la fecha de la última compra. La tarea consiste en realizar una segmentación de clientes utilizando métodos de clustering jerárquicos con diferentes enlaces y distancias.</p>
 <p>Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada método y comparar las diferencias entre ellos, destacando las ventajas y desventajas de cada enfoque. Además, se espera un análisis de las características principales de cada clúster, identificando, por ejemplo, a los clientes con mayor gasto promedio, el número promedio de artículos comprados por grupo y otras características relevantes. Finalmente, con base en los segmentos identificados, se deben proponer recomendaciones estratégicas para diseñar campañas de marketing dirigidas específicamente a cada segmento.</p>
 <section id="lectura-y-limpieza-de-los-datos" class="level2">
 <h2 class="anchored" data-anchor-id="lectura-y-limpieza-de-los-datos">Lectura y limpieza de los datos</h2>
+<p>Cargamos y visualizamos el conjunto de datos. Eliminamos el identificador y filtramos las variables numéricas.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cargamos los datos</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="st">"data_comercio.csv"</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">header=</span><span class="cn">TRUE</span>, <span class="at">sep=</span><span class="st">","</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># eliminamos el identificador</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>raw_data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="dv">1</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># filtramos las variables numericas</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> raw_data[, <span class="fu">sapply</span>(raw_data, is.numeric)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 200
+Columns: 4
+$ categoria       &lt;fct&gt; Alimentos, Alimentos, Ropa, Ropa, Alimentos, Juguetes,…
+$ importe_gastado &lt;dbl&gt; 178.83, 382.01, 425.32, 191.42, 271.65, 363.82, 338.66…
+$ num_articulos   &lt;int&gt; 8, 2, 5, 2, 6, 10, 10, 9, 7, 6, 3, 8, 7, 4, 8, 3, 8, 6…
+$ ultima_compra   &lt;date&gt; 2022-08-08, 2023-11-23, 2022-08-10, 2023-05-22, 2023-…</code></pre>
+</div>
 </div>
 </section>
 <section id="análisis-descriptivo" class="level2">
@@ -208,7 +218,7 @@ p {
 </div>
 </div>
 </div>
-<p>El gráfico no nos da mucha información porque no hay diferencias destacables a simple vista entre las 5 categorías. En particular, las cajas de los boxplot se solapan.</p>
+<p>El gráfico no nos da mucha información porque no hay diferencias globales evidentes entre las 5 categorías. En particular, las cajas de los boxplot se solapan, aunque podemos ver las categorías distinguidas según su mediana del número de artículos.</p>
 <p>Visualizemos con más detalle el gráfico de puntos de las variables <code>importe_gastado</code> y <code>num_articulos</code> según la categoria:</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -225,7 +235,7 @@ p {
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 3
   categoria   mediana_importe mediana_articulos
-  &lt;chr&gt;                 &lt;dbl&gt;             &lt;dbl&gt;
+  &lt;fct&gt;                 &lt;dbl&gt;             &lt;dbl&gt;
 1 Alimentos              233.                 5
 2 Electrónica            263.                 7
 3 Hogar                  311.                 5
@@ -252,11 +262,11 @@ p {
 <h2 class="anchored" data-anchor-id="aplicación-y-comparación-de-distintos-métodos-de-clustering-jerárquicos-aglomerativos">Aplicación y comparación de distintos métodos de clustering jerárquicos aglomerativos</h2>
 <p>Como la magnitud de los valores difiere notablemente entre variables, las escalamos.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> <span class="fu">scale</span>(raw_data_numeric, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>raw_data_numeric <span class="ot">&lt;-</span> <span class="fu">scale</span>(raw_data_numeric, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos escoger una medida de <strong>distancia</strong> y un tipo de <strong>enlace</strong>.</p>
-<p>Como tenemos una variable cuantitativa <strong>discreta</strong> y otra variable cuantitativa continua la distancia más adecuada será la <strong>Manhattan</strong>. En este caso, es mejor en este caso que la euclida puesto que esta última está pensada para variables cuantitativas continuas.</p>
-<p>Además, hemos considerado distintos enlaces (simple, completo, medio y de Ward) y hemos evaluado hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original. Hemos concluido que el enlace más adecuado es el <strong>enlace medio</strong>.</p>
+<p>Como tenemos una variable cuantitativa <strong>discreta</strong> y otra variable cuantitativa continua la distancia más adecuada será la <strong>Manhattan</strong>. En este caso, consideramos que es mejor que la euclídea puesto que esta última está pensada para variables cuantitativas continuas.</p>
+<p>Además, hemos considerado distintos enlaces (simple, completo, medio y de Ward) y hemos evaluado hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original. Hemos concluido que el enlace más adecuado es el <strong>enlace medio</strong>, con el coeficiente más alto.</p>
 <p>Representemos el dendograma:</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -290,7 +300,9 @@ p {
   3      0.11        0.35  0.18     0.28 0.20</code></pre>
 </div>
 </div>
-<p>El máximo de elementos de cada categoría queda clasificado en el cluster 1.</p>
+<p>El máximo de elementos de cada categoría queda clasificado en el cluster 1, lo cual es coherente con el hecho de que el primer cluster tiene muchos más elementos que los otros dos.</p>
+<p>En segundo lugar, alimentos, hogar y ropa están tienen más observaciones en el cluster 2 que en el 3.</p>
+<p>Y electrónica y juguetes tienenmás observaciones en el cluster 3 que en el 2.</p>
 <p>Veamos dentro de cada cluster qué categoría pesa más.</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -302,6 +314,12 @@ p {
 </div>
 </div>
 <p>El cluster 1 está muy equilibrado por categorías. El cluster 2 contiene principalmente hogar. El cluster 3 contiene principalmente electrónica seguido de juguetes.</p>
+<p>Así, hemos obtenido una clasificación que interpretamos así:</p>
+<ul>
+<li><p>Cluster sin categoría destacable donde residen la mayoría de observaciones.</p></li>
+<li><p>Cluster principalmente de hogar y, con menor representación, alimentación y ropa.</p></li>
+<li><p>Cluster principalmente de electrónica y juguetes.</p></li>
+</ul>
 <p>Observamos ahora las medianas de los datos por cada cluster:</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -315,14 +333,15 @@ p {
 </div>
 <p>Analizamos las características principales de cada clúster:</p>
 <ul>
-<li><p>Cluster 1: Mediana de importe de gasto <span class="math inline">\(171.85\)</span> con mediana de artículos <span class="math inline">\(6\)</span>. Es el cluster con mediana de gasto más baja, conteniendo así observaciones económicas.</p></li>
+<li><p>Cluster 1: Mediana de importe de gasto <span class="math inline">\(171.85\)</span> con mediana de artículos <span class="math inline">\(6\)</span>. Es el cluster con mediana de gasto más baja y mediana de número de artículos considerable, conteniendo así observaciones económicas.</p></li>
 <li><p>Cluster 2: Mediana de importe de gasto <span class="math inline">\(402.78\)</span> con mediana de artículos <span class="math inline">\(3\)</span>. Es el cluster con mediana de gasto más alta y menor mediana número de artículos. Por lo tanto, contiene artículos caros, lo cual es coherente con el hecho de que contiene principalmente artículos del hogar.</p></li>
 <li><p>Cluster 3: Mediana de importe de gasto <span class="math inline">\(383.765\)</span> con mediana de artículos <span class="math inline">\(8.5\)</span>. Es el cluster con mayor mediana de número de artículos y su mediana de gasto está entre las otras dos medianas, aunque más cercana a la alta. Recordemos que este cluster está principalmente representado por electrónica y juguetes.</p></li>
 </ul>
 </section>
 <section id="k-medoide" class="level2">
 <h2 class="anchored" data-anchor-id="k-medoide">K-medoide</h2>
-<p>Usamos la misma distancia que antes: Manhattan. Representamos el clustering k-medoides con Manhattan (sin jerarquía).</p>
+<p>Como no hemos obtenido una clasificación satisfactoria por categorías –que tal vez no exista–, vamos a aplicar el métodos de clustering K-medoide (que en este caso tiene más sentido que el K-means porque tenemos una variable cuantitativa discreta). Compararemos la clasificación obtenida con la del jerárquico aglomerativo.</p>
+<p>Usamos la misma distancia que antes: Manhattan. Representamos el clustering k-medoides con Manhattan.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -343,7 +362,7 @@ p {
   Sum        37          46    34       43   40 200</code></pre>
 </div>
 </div>
-<p>Interpretamos la clasificación.</p>
+<p>Interpretamos la clasificación. Esta vez la cantidad de elementos en cada cluster está más equilibrada.</p>
 <p>Veamos, para cada categoría, cómo está repartida en los tres clusters. ¿En qué cluster tienen más observaciones?</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -380,23 +399,23 @@ p {
 <p>Analizamos las características principales de cada clúster:</p>
 <ul>
 <li><p>Cluster 1: Mediana de importe de gasto <span class="math inline">\(147.76\)</span> con mediana de artículos <span class="math inline">\(8\)</span>. Es el cluster con mediana de gasto más baja, conteniendo así observaciones económicas. Recordemos que este cluster está principalmente representado por juguetes.</p></li>
-<li><p>Cluster 2: Mediana de importe de gasto <span class="math inline">\(232.97\)</span> con mediana de artículos <span class="math inline">\(3\)</span>. Este cluster tiene la menor mediana número de artículos. Recordemos que este cluster lo asociamos principalmente a alimentos, ropa y hogar.</p></li>
+<li><p>Cluster 2: Mediana de importe de gasto <span class="math inline">\(232.97\)</span> con mediana de artículos <span class="math inline">\(3\)</span>. Este cluster tiene la menor mediana de número de artículos. Recordemos que este cluster lo asociamos principalmente a alimentos, ropa y hogar.</p></li>
 <li><p>Cluster 3: Mediana de importe de gasto <span class="math inline">\(403.84\)</span> con mediana de artículos <span class="math inline">\(8\)</span>. Es el cluster con mayor mediana de número de artículos y mayor mediana de gasto. Recordemos que este cluster está principalmente representado por electrónica.</p></li>
 </ul>
 </section>
-<section id="decidimos" class="level2">
-<h2 class="anchored" data-anchor-id="decidimos">Decidimos</h2>
+<section id="decidimos-entre-jerárquico-y-k-medoide" class="level2">
+<h2 class="anchored" data-anchor-id="decidimos-entre-jerárquico-y-k-medoide">Decidimos entre jerárquico y K-medoide</h2>
 <p>En resumen, se pretendre ofrecer una segmentación de los clientes según su comportamiento de compra. Nos interesa la variable <em>categoría</em>.</p>
 <p>Por una parte, del jerárquico hemos obtenido una clasificación que interpretamos así:</p>
 <ul>
-<li><p>Cluster de hogar.</p></li>
-<li><p>Cluster electrónica y juguetes.</p></li>
-<li><p>Cluster sin categoría destacable.</p></li>
+<li><p>Cluster sin categoría destacable donde residen la mayoría de observaciones.</p></li>
+<li><p>Cluster principalmente de hogar y, con menor representación, alimentación y ropa.</p></li>
+<li><p>Cluster principalmente de electrónica y juguetes.</p></li>
 </ul>
 <p>Por otra parte, del K-medoides hemos obtenido una clasificación que interpretamos así:</p>
 <ul>
-<li><p>Cluster de alimentos, hogar y ropa.</p></li>
 <li><p>Cluster de juguetes.</p></li>
+<li><p>Cluster de alimentos, hogar y ropa.</p></li>
 <li><p>Cluster de electrónica.</p></li>
 </ul>
 <p>Recordemos que teníamos dos propuestas de partición y que con el método del codo hemos decidido que haya 3 clusters. Las dos propuestas eran:</p>
@@ -415,9 +434,9 @@ p {
 <li><p>Alimentos, hogar y ropa.</p></li>
 <li><p>Electrónica y juguetes.</p></li>
 </ul>
-<p>El problema de la opción 1 es que, a pesar de que dos de los tres clusters representen la clasifiación, el tercer cluster no es adecuado considerarlo sólo de alimentación y ropa. Es decir, el cluster que no detacada ninguna categoría en concreto hace que rechazemos los clusters del jerárquico.</p>
-<p>Los clusters del K-medoides sí que son adecuados para la interpretación de las categorías, puesto que respetan la idea que alimentación, hogar y ropa debe ir separado de eletrónica y juguetes.</p>
-<p>Así, el algoritmo k-medoides ha demostrado ofrecer mejores resultados a la hora de interpretarlos por categorías.</p>
+<p>El problema del jerárquico es que el cluster en que no destaca ninguna categoría en concreto no interesa para segmentar a los clientes.</p>
+<p>Los clusters del K-medoides, en cambio, sí que son adecuados para la interpretación por categorías. Respetan la idea que alimentación, hogar y ropa debe ir separado de eletrónica y juguetes. Además, las categorías quedan bien separadas según en qué cluster tienen el máximo de obersvaciones.</p>
+<p>Así, el algoritmo K-medoides ha demostrado ofrecer mejores resultados a la hora de interpretarlos por categorías.</p>
 </section>
 <section id="train---test" class="level2">
 <h2 class="anchored" data-anchor-id="train---test">Train - Test</h2>
@@ -425,19 +444,19 @@ p {
 <p>En esta etapa de evaluación, compararemos las predicciones generadas por el modelo con la clasificación original de los datos, lo que nos permitirá medir su precisión y rendimiento.</p>
 <p>Separamos el conjunto de datos:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">124</span>) </span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> raw_data_numeric</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>train_index <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data), <span class="at">p =</span> <span class="fl">0.8</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> data[train_index, ]</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> data[<span class="sc">-</span>train_index, ]</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>test_labels <span class="ot">&lt;-</span> pam_cluster<span class="sc">$</span>clustering[<span class="sc">-</span>train_index]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">124</span>) </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> raw_data_numeric</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>train_index <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data), <span class="at">p =</span> <span class="fl">0.8</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> data[train_index, ]</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> data[<span class="sc">-</span>train_index, ]</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>test_labels <span class="ot">&lt;-</span> pam_cluster<span class="sc">$</span>clustering[<span class="sc">-</span>train_index]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Entrenamos el modelo:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">3</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>kmedoids_model <span class="ot">&lt;-</span> <span class="fu">pam</span>(train_data, k)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(kmedoids_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>kmedoids_model <span class="ot">&lt;-</span> <span class="fu">pam</span>(train_data, k)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(kmedoids_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Medoids:
       ID importe_gastado num_articulos
@@ -461,25 +480,41 @@ Available components:
 </div>
 <p>Aplicamos el modelo al conjunto de prueba:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>medoids <span class="ot">&lt;-</span> kmedoids_model<span class="sc">$</span>medoids</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dist_test <span class="ot">&lt;-</span> <span class="fu">apply</span>(test_data, <span class="dv">1</span>, <span class="cf">function</span>(x) {</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apply</span>(medoids, <span class="dv">1</span>, <span class="cf">function</span>(y) <span class="fu">sum</span>(<span class="fu">abs</span>(x <span class="sc">-</span> y)))  <span class="co"># Distancia Manhattan</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>test_clusters <span class="ot">&lt;-</span> <span class="fu">apply</span>(dist_test, <span class="dv">2</span>, which.min)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>medoids <span class="ot">&lt;-</span> kmedoids_model<span class="sc">$</span>medoids</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>dist_test <span class="ot">&lt;-</span> <span class="fu">apply</span>(test_data, <span class="dv">1</span>, <span class="cf">function</span>(x) {</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apply</span>(medoids, <span class="dv">1</span>, <span class="cf">function</span>(y) <span class="fu">sum</span>(<span class="fu">abs</span>(x <span class="sc">-</span> y)))  <span class="co"># Distancia Manhattan</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>test_clusters <span class="ot">&lt;-</span> <span class="fu">apply</span>(dist_test, <span class="dv">2</span>, which.min)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Comparamos los resultados del modelo con los reales:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cluster_factor <span class="ot">&lt;-</span> <span class="fu">factor</span>(test_clusters, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span>k)</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(cluster_factor <span class="sc">==</span> test_labels)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cluster_factor <span class="ot">&lt;-</span> <span class="fu">factor</span>(test_clusters, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span>k)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(cluster_factor <span class="sc">==</span> test_labels)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 35</code></pre>
 </div>
 </div>
 <p>Concluimos que para esta simulación el modelo ha acertado 35 veces de 40.</p>
 </section>
-<section id="recomendaciones" class="level2">
-<h2 class="anchored" data-anchor-id="recomendaciones">Recomendaciones</h2>
+<section id="recomendaciones-y-conclusiones" class="level2">
+<h2 class="anchored" data-anchor-id="recomendaciones-y-conclusiones">Recomendaciones y conclusiones</h2>
+<p>Notemos que podemos separar las estrategias de marketing según electrónica (tercer grupo) y juguetes (primer grupo) mientras que para hogar, alimentacion y ropa se pueden diseñar estrategias de marketing parecidas (segundo grupo). Siguiendo la clasificación del k-medoides.</p>
+<ul>
+<li>Compras de más artículos pero bajo gasto (<em>cluster juguetes</em>).
+<ul>
+<li>Estrategias: Promociones que aumenten el numero de articulos vendidios, por ejemplo, 2x1 o 3x2.</li>
+</ul></li>
+<li>Compras de menor número de productos y gasto medio (<em>cluster alimentos, ropa y hogar</em>).
+<ul>
+<li>Estrategias: como este es el sector en el que menos número de artículos se consume, proponemos hacer campañas para fomentar la compra de más artículos.</li>
+</ul></li>
+<li>Compras de alto gasto y también muchos artículos (<em>cluster electrónica</em>).
+<ul>
+<li>Estrategias: Este sector está funcionando bien y se le está sacando provecho. La venta de electrónica no necesita tanto esfuerzo para mejorar los resultados comerciales.</li>
+</ul></li>
+</ul>
+<p>Además, para futuros estudios proponemos estudiar los datos según la variable de perfil “fecha de la última compra”. Sería interesante encontrar patrones de estacionalidad para enfocar la estrategia de marketing según la época del año.</p>
 </section>
 <section id="bibliografia" class="level2">
 <h2 class="anchored" data-anchor-id="bibliografia">Bibliografia</h2>

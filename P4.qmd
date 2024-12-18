@@ -454,7 +454,22 @@ sum(cluster_factor == test_labels)
 
 Concluimos que para esta simulación el modelo ha acertado 35 veces de 40.
 
-## Recomendaciones
+
+## Recomendaciones y conclusiones
+
+Notemos que podemos separar las estrategias de marketing según electrónica (tercer grupo) y juguetes (primer grupo) mientras que para hogar, alimentacion y ropa se pueden diseñar estrategias de marketing parecidas (segundo grupo). Siguiendo la clasificación del k-medoides. 
+
+- Compras de más artículos pero bajo gasto (*cluster juguetes*). 
+    - Estrategias: Promociones que aumenten el numero de articulos vendidios, por ejemplo, 2x1 o 3x2.
+  
+- Compras de menor número de productos y gasto medio (*cluster alimentos, ropa y hogar*). 
+    - Estrategias: como este es el sector en el que menos número de artículos se consume, proponemos hacer campañas para fomentar la compra de más artículos. 
+  
+- Compras de alto gasto y también muchos artículos (*cluster electrónica*).
+    - Estrategias: Este sector está funcionando bien y se le está sacando provecho. La venta de electrónica no necesita tanto esfuerzo para mejorar los resultados comerciales.
+
+Además, para futuros estudios proponemos estudiar los datos según la variable de perfil "fecha de la última compra". Sería interesante encontrar patrones de estacionalidad para enfocar la estrategia de marketing según la época del año.
+
 
 
 
