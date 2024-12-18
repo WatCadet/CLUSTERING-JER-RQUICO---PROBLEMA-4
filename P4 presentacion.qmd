@@ -39,16 +39,28 @@ Deberéis presentar visualizaciones de los agrupamientos obtenidos con cada mét
 
 ## Lectura y limpieza de los datos
 
-```{r}
+Cargamos y visualizamos el conjunto de datos. Eliminamos el identificador y filtramos las variables numéricas. 
+
+```{r, echo=FALSE}
 # cargamos los datos
 data <-read.csv("data_comercio.csv",
                    header=TRUE, sep=",")
 # eliminamos el identificador
-raw_data <- data %>% select(-1)
+raw_data <- data %>% select(-1, -2)
+
+# categoria a factor
+raw_data$categoria <- as.factor(raw_data$categoria)
+
+# fecha a Date
+raw_data$ultima_compra <- as.Date(raw_data$ultima_compra)
+
+# visualizamos
+raw_data %>%
+  glimpse
+
 # filtramos las variables numericas
 raw_data_numeric <- raw_data[, sapply(raw_data, is.numeric)]
 ```
-
 ## Análisis descriptivo
 
 Analicemos nuestro conjunto de datos, que consta de 200 observaciones y 5 variables:
@@ -74,7 +86,7 @@ ggpairs(d, mapping = aes(color= categoria, alpha=0.6)) +
   theme_bw()
 ```
 
-El gráfico no nos da mucha información porque no hay diferencias destacables a simple vista entre las 5 categorías. En particular, las cajas de los boxplot se solapan.
+El gráfico no nos da mucha información porque no hay diferencias globales evidentes entre las 5 categorías. En particular, las cajas de los boxplot se solapan, aunque podemos ver las categorías distinguidas según su mediana del número de artículos.
 
 Visualizemos con más detalle el gráfico de puntos de las variables `importe_gastado` y `num_articulos` según la categoria:
 
@@ -122,9 +134,9 @@ raw_data_numeric <- scale(raw_data_numeric, center = TRUE, scale = TRUE)
 
 Apliquemos métodos de clustering jerárquico aglomerativo. Para ello debemos escoger una medida de **distancia** y un tipo de **enlace**.
 
-Como tenemos una variable cuantitativa **discreta** y otra variable cuantitativa continua la distancia más adecuada será la **Manhattan**. En este caso, es mejor en este caso que la euclida puesto que esta última está pensada para variables cuantitativas continuas.
+Como tenemos una variable cuantitativa **discreta** y otra variable cuantitativa continua la distancia más adecuada será la **Manhattan**. En este caso, consideramos que es mejor que la euclídea puesto que esta última está pensada para variables cuantitativas continuas.
 
-Además, hemos considerado distintos enlaces (simple, completo, medio y de Ward) y hemos evaluado hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original. Hemos concluido que el enlace más adecuado es el **enlace medio**.
+Además, hemos considerado distintos enlaces (simple, completo, medio y de Ward) y hemos evaluado hasta qué punto su estructura refleja las distancias originales entre observaciones con el coeficiente de correlación entre las distancias cophenetic del dendrograma (altura de los nodos) y la matriz de distancias original. Hemos concluido que el enlace más adecuado es el **enlace medio**, con el coeficiente más alto.
 
 ```{r, include=FALSE}
 # Matriz de distancias
@@ -159,7 +171,11 @@ Veamos, para cada categoría, cómo está repartida en los tres clusters. ¿En q
 ```{r, echo=FALSE}
 round(prop.table(table(cutree(hc_manhattan_medio, k = 3), raw_data$categoria), margin=2), 2)
 ```
-El máximo de elementos de cada categoría queda clasificado en el cluster 1.
+El máximo de elementos de cada categoría queda clasificado en el cluster 1, lo cual es coherente con el hecho de que el primer cluster tiene muchos más elementos que los otros dos. 
+
+En segundo lugar, alimentos, hogar y ropa están tienen más observaciones en el cluster 2 que en el 3. 
+
+Y electrónica y juguetes tienenmás observaciones en el cluster 3 que en el 2.
 
 Veamos dentro de cada cluster qué categoría pesa más.
 
@@ -169,6 +185,14 @@ round(prop.table(table(cutree(hc_manhattan_medio, k = 3), raw_data$categoria), m
 
 El cluster 1 está muy equilibrado por categorías. El cluster 2 contiene principalmente hogar. El cluster 3 contiene principalmente electrónica seguido de juguetes. 
 
+Así, hemos obtenido una clasificación que interpretamos así:
+
+  - Cluster sin categoría destacable donde residen la mayoría de observaciones.
+
+  - Cluster principalmente de hogar y, con menor representación, alimentación y ropa.
+  
+  - Cluster principalmente de electrónica y juguetes.
+  
 Observamos ahora las medianas de los datos por cada cluster:
 
 ```{r, echo=FALSE}
@@ -182,15 +206,17 @@ d %>%
 
 Analizamos las características principales de cada clúster:
 
-  - Cluster 1: Mediana de importe de gasto $171.85$ con mediana de artículos $6$. Es el cluster con mediana de gasto más baja, conteniendo así observaciones económicas.
+  - Cluster 1: Mediana de importe de gasto $171.85$ con mediana de artículos $6$. Es el cluster con mediana de gasto más baja y mediana de número de artículos considerable, conteniendo así observaciones económicas.
   
   - Cluster 2: Mediana de importe de gasto $402.78$ con mediana de artículos $3$. Es el cluster con mediana de gasto más alta y menor mediana número de artículos. Por lo tanto, contiene artículos caros, lo cual es coherente con el hecho de que contiene principalmente artículos del hogar.
 
   - Cluster 3: Mediana de importe de gasto $383.765$ con mediana de artículos $8.5$. Es el cluster con mayor mediana de número de artículos y su mediana de gasto está entre las otras dos medianas, aunque más cercana a la alta. Recordemos que este cluster está principalmente representado por electrónica y juguetes.
-  
+
 ## K-medoide
 
-Usamos la misma distancia que antes: Manhattan. Representamos el clustering k-medoides con Manhattan (sin jerarquía).
+Como no hemos obtenido una clasificación satisfactoria por categorías --que tal vez no exista--, vamos a aplicar el métodos de clustering K-medoide (que en este caso tiene más sentido que el K-means porque tenemos una variable cuantitativa discreta). Compararemos la clasificación obtenida con la del jerárquico aglomerativo.
+
+Usamos la misma distancia que antes: Manhattan. Representamos el clustering k-medoides con Manhattan.
 
 ```{r, echo=FALSE}
 # Aplicar PAM (Partitioning Around Medoids)
@@ -209,20 +235,22 @@ tabla2 = table(pam_cluster$clustering, raw_data$categoria)
 
 addmargins(tabla2)
 ```
-Interpretamos la clasificación.  
+Interpretamos la clasificación.  Esta vez la cantidad de elementos en cada cluster está más equilibrada.
 
 Veamos, para cada categoría, cómo está repartida en los tres clusters. ¿En qué cluster tienen más observaciones?
 
 ```{r, echo=FALSE}
 round(prop.table(tabla2, margin=2), 2)
 ```
-Alimentos, hogar y ropa tienen su máximo en el cluster 2. Juguetes tiene su máximo en el cluster 1 y electrónica tiene su máximo en el cluster 3.
+
+Alimentos, hogar y ropa tienen su máximo en el cluster 2. Juguetes tiene su máximo en el cluster 1 y electrónica tiene su máximo en el cluster 3. 
 
 Veamos dentro de cada cluster qué categoría pesa más.
 
 ```{r, echo=FALSE}
 round(prop.table(tabla2, margin=1), 2)
 ```
+
 El cluster 1 está mayoritariamente representado por juguetes y el cluster 3 tiene sobretot electrónica. 
 
 Observamos ahora las medianas de los datos por cada cluster:
@@ -240,7 +268,7 @@ Analizamos las características principales de cada clúster:
 
   - Cluster 1: Mediana de importe de gasto $147.76$ con mediana de artículos $8$. Es el cluster con mediana de gasto más baja, conteniendo así observaciones económicas. Recordemos que este cluster está principalmente representado por juguetes.
   
-  - Cluster 2: Mediana de importe de gasto $232.97$ con mediana de artículos $3$. Este cluster tiene la menor mediana número de artículos. Recordemos que este cluster lo asociamos principalmente a alimentos, ropa y hogar.
+  - Cluster 2: Mediana de importe de gasto $232.97$ con mediana de artículos $3$. Este cluster tiene la menor mediana de número de artículos. Recordemos que este cluster lo asociamos principalmente a alimentos, ropa y hogar.
 
   - Cluster 3: Mediana de importe de gasto $403.84$ con mediana de artículos $8$. Es el cluster con mayor mediana de número de artículos y mayor mediana de gasto. Recordemos que este cluster está principalmente representado por electrónica.
 
@@ -250,20 +278,20 @@ En resumen, se pretendre ofrecer una segmentación de los clientes según su com
 
 Por una parte, del jerárquico hemos obtenido una clasificación que interpretamos así:
 
-  - Cluster de hogar.
+  - Cluster sin categoría destacable donde residen la mayoría de observaciones.
+
+  - Cluster principalmente de hogar y, con menor representación, alimentación y ropa.
   
-  - Cluster electrónica y juguetes.
-  
-  - Cluster sin categoría destacable.
+  - Cluster principalmente de electrónica y juguetes.
 
 Por otra parte, del K-medoides hemos obtenido una clasificación que interpretamos así: 
 
-  - Cluster de alimentos, hogar y ropa.
-  
   - Cluster de juguetes.
-  
-  - Cluster de electrónica.
 
+  - Cluster de alimentos, hogar y ropa.
+
+  - Cluster de electrónica.
+  
 Recordemos que teníamos dos propuestas de partición y que con el método del codo hemos decidido que haya 3 clusters. Las dos propuestas eran:
 
 1. Por importe de gasto:
@@ -280,11 +308,11 @@ Recordemos que teníamos dos propuestas de partición y que con el método del c
   
   - Electrónica y juguetes.
 
-El problema del jerárquico es que el cluster en que no detacada ninguna categoría en concreto no interesa para segmentar a los clientes.
+El problema del jerárquico es que el cluster en que no destaca ninguna categoría en concreto no interesa para segmentar a los clientes.
 
-Los clusters del K-medoides, en cambio, sí que son adecuados para la interpretación por categorías. Respetan la idea que alimentación, hogar y ropa debe ir separado de eletrónica y juguetes.
+Los clusters del K-medoides, en cambio, sí que son adecuados para la interpretación por categorías. Respetan la idea que alimentación, hogar y ropa debe ir separado de eletrónica y juguetes. Además, las categorías quedan bien separadas según en qué cluster tienen el máximo de obersvaciones.
 
-Así, el algoritmo k-medoides ha demostrado ofrecer mejores resultados a la hora de interpretarlos por categorías.
+Así, el algoritmo K-medoides ha demostrado ofrecer mejores resultados a la hora de interpretarlos por categorías.
 
 ## Train - Test
 
@@ -333,6 +361,8 @@ sum(cluster_factor == test_labels)
 Concluimos que para esta simulación el modelo ha acertado 35 veces de 40.
 
 ## Recomendaciones
+
+
 
 ## Bibliografia
 
